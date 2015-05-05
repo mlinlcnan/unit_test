@@ -9,6 +9,7 @@ workdir/
 -  |--src/
 -      |--comm/
 -  |--test/
+
 1. include放头文件，lib放库文件，obj放目标文件，src放项目代码，test下面放测试用例代码
 2. makefile和make.sh里面都使用的是HOME目录和workdir，如果你要放到其他位置使用，需要对makefile和shell脚本进行简单的修改
 
