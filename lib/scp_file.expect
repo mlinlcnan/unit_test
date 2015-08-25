@@ -1,0 +1,27 @@
+#!/bin/expect
+
+#scp type 'send' and 'get'
+set scp_type [lindex $argv 0]
+set ip [lindex $argv 1]
+set user [lindex $argv 2]
+set pass [lindex $argv 3]
+set file [lindex $argv 4]
+set path [lindex $argv 5]
+
+if { $scp_type == "send" } {
+	spawn scp "$file" "$user@$ip:$path"
+} else {
+	spawn scp "$user@$ip:$file" $path"
+}
+expect {
+    "(yes/no)?" {
+            send "yes\r"
+            expect "Password:"
+            send "$pass\r"
+            exp_continue
+        }
+    "Password" {
+            send "$pass\r"
+            exp_continue
+        }
+}
