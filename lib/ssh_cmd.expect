@@ -1,0 +1,21 @@
+#!/bin/expect
+
+set ip [lindex $argv 0]
+set cmd [lindex $argv 1]
+set user [lindex $argv 2]
+set pass [lindex $argv 3]
+set timeout [lindex $argv 4]
+
+spawn ssh "$user@$ip" "$cmd"
+expect {
+    "(yes/no)?" {
+            send "yes\r"
+            expect "Password:"
+            send "$pass\r"
+            exp_continue
+        }
+    "Password" {
+            send "$pass\r"
+            exp_continue
+        }
+}
