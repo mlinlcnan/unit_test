@@ -9,7 +9,7 @@ set file [lindex $argv 4]
 set path [lindex $argv 5]
 
 if { $scp_type == "send" } {
-	spawn scp "$file" "$user@$ip:$path"
+	spawn scp -r "$file" "$user@$ip:$path"
 } else {
 	spawn scp "$user@$ip:$file" $path"
 }
