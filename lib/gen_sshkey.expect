@@ -1,0 +1,18 @@
+#!/bin/expect
+
+spawn ssh-keygen
+
+expect "id_rsa):"
+send "\r"
+expect {
+	"passphrase)" {
+		send "\r"
+		expect "again:"
+		send "\r"
+		exp_continue
+	}
+	"(y/n)?" {
+		send "n\r"
+		exp_continue
+	}
+}
