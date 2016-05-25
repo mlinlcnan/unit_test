@@ -8,7 +8,7 @@
 server_ip_list="48.10.46.71 48.10.46.72"
 server_count=2
 server_user="root"
-server_passwd="huawei@123"
+server_passwd="xxxx"
 main_server_ip="48.10.46.71"
 main_server_port="10051"
 
@@ -30,7 +30,7 @@ top_count=10
 #FS
 fs_ip="48.29.19.1"
 fs_user="root"
-fs_passwd="Huawei@CLOUD8!"
+fs_passwd="xxxx"
 fs_work_path="/root/perf"
 fs_data_path="/root/perf/result_data"
 
