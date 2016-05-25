@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<build>
+  <now build_id="20160426152300" pkg="1" md5sum="56d5834283001bfa4e4931beb89d608b" git="c4dd24090a45fb4c90d22581df73ef40ed7ff086"/>
+  <last build_id="20160426145537" pkg="2" md5sum="09f0eb1799add340b371cd19639aaa5b" git="9db6713274885dadcd943ec9d31b1c7b8d3327cf"/>
+  <base build_id="20160330143758" pkg="3" md5sum="3b155137101de96a89a927d0cc6534c1" git="a132abb65ce33ee53b73607ba2c4ada19c5ee6c2"/>
+  <model name="ugw0">
+    <result type="Insert">
+      <ops>3125.0</ops>
+      <compbase>0.0</compbase>
+      <complast>1.03</complast>
+      <latency>913.0,14038.3,14038.3</latency>
+      <cpu>53.0</cpu>
+    </result>
+    <result type="Update">
+      <ops>22940.0</ops>
+      <compbase>0.0</compbase>
+      <complast>3.3</complast>
+      <latency>263.0,1607.0,1853.93</latency>
+      <cpu>80.0</cpu>
+    </result>
+    <result type="Read">
+      <ops>57959.0</ops>
+      <compbase>0.0</compbase>
+      <complast>-4.32</complast>
+      <latency>96.0,560.0,719.911</latency>
+      <cpu>36.0</cpu>
+    </result>
+    <result type="Delete">
+      <ops>3025.0</ops>
+      <compbase>0.0</compbase>
+      <complast>1.41</complast>
+      <latency>494.0,14477.6,14477.6</latency>
+      <cpu>58.0</cpu>
+    </result>
+    <result type="Append">
+      <ops>24044.0</ops>
+      <compbase>0.0</compbase>
+      <complast>2.26</complast>
+      <latency>241.0,1599.0,1778.64</latency>
+      <cpu>75.0</cpu>
+    </result>
+  </model>
+  <model name="usn0">
+    <result type="Insert">
+      <ops>6564.0</ops>
+      <compbase>3.11</compbase>
+      <complast>1.41</complast>
+      <latency>805.0,6598.13,6598.13</latency>
+      <cpu>57.0</cpu>
+    </result>
+    <result type="Update">
+      <ops>23874.0</ops>
+      <compbase>20.61</compbase>
+      <complast>-0.64</complast>
+      <latency>233.0,1632.0,1793.16</latency>
+      <cpu>85.0</cpu>
+    </result>
+    <result type="Read">
+      <ops>29576.0</ops>
+      <compbase>-2.72</compbase>
+      <complast>-8.1</complast>
+      <latency>166.0,1010.0,1360.77</latency>
+      <cpu>32.0</cpu>
+    </result>
+    <result type="Delete">
+      <ops>3943.0</ops>
+      <compbase>0.0</compbase>
+      <complast>1.16</complast>
+      <latency>444.0,11048.7,11048.7</latency>
+      <cpu>56.0</cpu>
+    </result>
+    <result type="Append">
+      <ops>14020.0</ops>
+      <compbase>-2.55</compbase>
+      <complast>1.06</complast>
+      <latency>379.0,2553.0,3072.47</latency>
+      <cpu>74.0</cpu>
+    </result>
+  </model>
+</build>
