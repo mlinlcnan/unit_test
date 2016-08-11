@@ -1,0 +1,735 @@
+#!/bin/bash
+#+++++++++++++++++++++++++++++++
+#Created on: 2016-6-15
+#Author: xx
+#Comments: xx
+#+++++++++++++++++++++++++++++++
+
+deploy_all()
+{
+	#send all to OMU
+	expect -f scp_file.exp "send" "$omu_ip" "$default_vm_user" "$default_vm_passwd" "$work_dir" "/root"
+	
+	#deploy gmadm
+	expect -f ssh_cmd.exp "$omu_ip" "mkdir xx_install;tar zxf $omu_work_dir/$gmadm_tool_tar -C xx_install" "$default_vm_user" "$default_vm_passwd" "20"
+}
+
+replace_omu_so()
+{
+	while [ "X" = "X" ]
+	do
+		if [ -d $so_dir ];then
+			echo "INFO:sleep 20s..."
+			sleep 20
+			break
+		else
+			echo "INFO:lib dir don't exist,wait..."
+			sleep 5
+		fi
+	done
+	
+	#omu1
+	cp $so_dir/* $lib_dir
+	
+	#omu2
+	#expect -f ssh_cmd.exp "$omu2_ip" "cp $so_dir/* $lib_dir" "$default_vm_user" "$default_vm_passwd" "20"
+}
+
+replace_plu_so()
+{
+	ip_list=$1
+	if [ "$ip_list""X" = "X" ];then
+		echo "INFO:use default ugw_ip_list!"
+		ip_list="$ugw_ip_list"
+	fi
+	
+	for ip in $ip_list
+	do
+		#generate server_ip file
+		expect -f ssh_cmd.exp "$ip" "touch $bin_dir/$server_ip_file;echo 'tcp:host=172.16.0.16,port=5100;tcp:host=172.16.0.18,port=5100' > $bin_dir/$server_ip_file" "$default_vm_user" "$default_vm_passwd" "20"
+		
+		#replace so
+		expect -f scp_file.exp "send" "$ip" "$default_vm_user" "$default_vm_passwd" "$so_dir" "$lib_dir"
+		expect -f ssh_cmd.exp "$ip" "cp $lib_dir/lib/* $lib_dir;rm -fr cp $lib_dir/lib" "$default_vm_user" "$default_vm_passwd" "20"
+		
+		#send dbg file
+		#expect -f scp_file.exp "send" "$ip" "$default_vm_user" "$default_vm_passwd" "libcsdbplugin.so.dbg" "$lib_dir"
+	done
+}
+
+send_sshkey_to_host()
+{
+	ip_list="$db_ip_list $ugw_ip_list"
+	for ip in $ip_list
+	do
+		expect -f ssh_cmd.exp "$ip" "mkdir $ssh_path > /dev/null 2>&1" "$default_vm_user" "$default_vm_passwd" "20"
+		expect -f scp_file.exp "send" "$ip" "$default_vm_user" "$default_vm_passwd" "$ssh_path/authorized_keys" "$ssh_path"
+		expect -f scp_file.exp "send" "$ip" "$default_vm_user" "$default_vm_passwd" "$ssh_path/id_rsa" "$ssh_path"
+	done
+}
+
+gen_sshkey()
+{
+	expect -f gen_sshkey.exp
+	mv $ssh_path/id_rsa.pub $ssh_path/authorized_keys > /dev/null 2>&1
+}
+
+get_table_records()
+{
+	table_name=$1
+	if [ "$table_name""X" = "X" ];then
+		echo "INFO:use default table[$default_table_name]!"
+		table_name="$default_table_name"
+	fi
+	
+	input_master_ip=$2
+	if [ "$input_master_ip""X" = "X" ];then
+		echo "INFO:use default master ip[$default_master_ip]!"
+		input_master_ip="$default_master_ip"
+	fi
+	
+	echo "INFO:[$input_master_ip][$table_name]"
+	cd $gmadm_home
+	source $gmadm_env_script
+	cd $gmadm_tool_path
+	table_id=`python gmadm.py $input_master_ip:5100 -c "select * from SV_TABLES" | grep $table_name| awk '{print $3}'`
+	if [ "$table_id""X" = "X" ];then
+		echo "Error:get table id fail!"
+		return
+	else
+		echo "INFO:table id is [$table_id]"
+		#get table record info
+		echo "----------------------------------------------------------------------"
+		python gmadm.py $input_master_ip:5100 -c "select * from SV_TAB_REC" | awk "\$2==$table_id"
+		#get tablets info
+		echo "----------------------------------------------------------------------"
+		#python gmadm.py $input_master_ip:5100 -c "select * from SV_TABLETS" | awk "\$2==$table_id"
+		#echo "----------------------------------------------------------------------"
+		
+		#get count
+		count_list=`python gmadm.py $input_master_ip:5100 -c "select * from SV_TAB_REC" | awk "\\$2==$table_id {print \\$3}"`
+		total_count=0
+		for count in $count_list
+		do
+			total_count=`expr $count + $total_count`
+		done
+		#main_count=$(($total_count/2))
+		echo -e "Table [$table_name][total:\033[33m$total_count\033[0m]"
+	fi
+	echo "----------------------------------------------------------------------"
+	date
+}
+
+get_sn()
+{
+	input_master_ip=$1
+	if [ "$input_master_ip""X" = "X" ];then
+		echo "INFO:use default master ip[$default_master_ip]!"
+		input_master_ip="$default_master_ip"
+	fi
+	
+	user_table_name=$default_table_name
+	sn_table_name="T865"
+	sv_sn_file="sv_sn.txt"
+	sv_tablets_file="sv_tablets.txt"
+	
+	cd $gmadm_home
+	source $gmadm_env_script
+	cd $gmadm_tool_path
+	
+	python gmadm.py $input_master_ip:5100 -c "select * from SV_TABLES" > $sv_tablets_file
+	user_table_id=`cat $sv_tablets_file | grep $user_table_name| awk '{print $3}'`
+	sn_table_id=`cat $sv_tablets_file | grep $sn_table_name| awk '{print $3}'`
+	if [ "$user_table_id""X" = "X" -o "$sn_table_id""X" = "X" ];then
+		echo "ERROR:get table id fail!"
+		return
+	fi
+	
+	python gmadm.py $input_master_ip:5100 -c "select * from SV_SN" > $sv_sn_file
+	sn_table_list=`cat sv_sn.txt | sed '/^$/d' | awk '{print $3}'| sed '/[^0-9]/d'| sort | uniq`
+	for sn_table in $sn_table_list
+	do
+		echo "---------------------------------------------"
+		sn_count=`cat $sv_sn_file | awk "\\$3==$sn_table" | wc -l`
+		echo -e "\033[33m[Table:$sn_table][SN count:$sn_count]\033[0m"
+		echo "---------------------------------------------"
+		sn_id_list=`cat $sv_sn_file | awk "\\$3==$sn_table {print \\$1}" | sort| uniq`
+		
+		declare -i i=1
+		for sn_id in $sn_id_list
+		do
+			sn_id_count=`cat $sv_sn_file | awk "\\$3==$sn_table && \\$1==$sn_id" | wc -l`
+			sn_ip=`cat $sv_sn_file | awk "\\$3==$sn_table && \\$1==$sn_id" | awk '{print $2}' | uniq`
+			echo "[$i][$sn_ip SID:$sn_id]:[SN count:$sn_id_count]"
+			let i++
+		done
+	done
+	echo "---------------------------------------------"
+	date
+}
+
+get_process_info()
+{
+	type=$1
+	ip_list=""
+	proc_type=""
+	if [ "$type" = "DB" ];then
+		ip_list=$db_ip_list
+		proc_type="-E 'DNP|PRP'"
+	elif [ "$type" = "PLU" ];then
+		ip_list=$ugw_ip_list
+		proc_type="VCLI"
+	fi
+	
+	for ip in $ip_list
+	do
+		expect -f ssh_cmd.exp "$ip" "echo -e '\033[33m------$type:$ip------';ps -eO lstart | grep $proc_type | grep -v 'grep';echo -e '\033[0m'" "$default_vm_user" "$default_vm_passwd" "20"
+	done
+	echo "----------------------------------------------------------------------"
+	date
+}
+
+check_gmadm_tool()
+{
+	if [ -d $gmadm_home ];then
+		echo "INFO:gmadm tool deployed."
+	else
+		mkdir $gmadm_home
+		tar zxvf $gmadm_tool_tar -C $gmadm_home
+		if [ $? != 0 ];then
+			echo "ERROR:tar error!"
+			rm -fr $gmadm_home
+			exit
+		fi
+	fi
+}
+
+deploy_gmadm_tool()
+{
+	check_gmadm_tool
+	
+	cd $gmadm_home
+	source $gmadm_env_script
+	cd $gmadm_tool_path
+	python gmadm.py 172.16.0.16:5100\;172.16.0.18:5100
+}
+
+get_log()
+{
+	log_type=$1
+	local_path=$2
+	ip_list=""
+	if [ "$log_type" = "DB" ];then
+		log_path="$xx_nos_log $xx_log $xx_log_other $xx_logcabin_log"
+		omu_log_path="$xx_nos_log_omu"
+		ip_list=$db_ip_list
+	elif [ "$log_type" = "PLU" ];then
+		log_path="$ugw_nos_log $ugw_log_data"
+		omu_log_path="$ugw_nos_log_omu"
+		ip_list=$ugw_ip_list
+	else
+		echo "ERROR:type error, must be [DB|PLU]"
+	fi
+	
+	for ip in $ip_list
+	do
+		expect -f ssh_cmd.exp "$ip" "tar zcvf $log_type_log_$ip.tar.gz $log_path" "$default_vm_user" "$default_vm_passwd" "60"
+		expect -f scp_file.exp "get" "$ip" "$default_vm_user" "$default_vm_passwd" "$log_type_log_$ip.tar.gz" "$local_path"
+	done
+	
+	#get plugin log from OMU
+	tar zcvf "$local_path/OMU_nos_log.tar.gz" $omu_log_path
+	echo "----------------------------------------------------------------------"
+	ls -l $local_path
+}
+
+check_locfail_core()
+{
+	check_type=$1
+	ip_list=""
+	locfail_path=""
+	if [ "$check_type" = "PLU" ];then
+		ip_list=$ugw_ip_list
+		locfail_path=$ugw_locfail_path
+	elif [ "$check_type" = "DB" ];then
+		ip_list=$db_ip_list
+		locfail_path=$xx_locfail_path
+	else
+		echo "ERROR:don't define $check_type, must be [PLU|DB]"
+		return
+	fi
+	
+	for ip in $ip_list
+	do
+		expect -f ssh_cmd.exp "$ip" "echo -e '\033[33m------$check_type:$ip------';ls -l $locfail_path | grep -E 'LocFail|SSP';echo -e '\033[0m'"  "$default_vm_user" "$default_vm_passwd" "10"
+	done
+}
+
+get_pid_list_4cpu()
+{
+	pid_type=$1
+	pid_result=""
+	ip_list=""
+	cmd=""
+	
+	if [ "$pid_type" = "DB" ];then
+		ip_list="$db_ip_list"
+		cmd="DNP|PRP"
+	elif [ "$pid_type" = "PLU" ];then
+		ip_list="$ugw_ip_list"
+		cmd="VCLI"
+	else
+		echo "ERROR:don't support [$pid_type]"
+		return "location"
+	fi
+	
+	for ip in $ip_list
+	do
+		pid_list=`ssh $ip "ps axf | grep -E '$cmd' | grep -v 'grep' | awk '{print \\$1}'"`
+		for pid in $pid_list
+		do
+			if [ "$pid_result""X" = "X" ];then
+				pid_result="$pid"
+			else
+				pid_result="$pid_result|$pid"
+			fi
+		done
+	done
+	
+	echo "INFO:pid list[$pid_result]"
+	global_pid_list="$pid_result"
+}
+
+get_cpu_usage()
+{
+	cpu_type=$1
+	top_times=$2
+	test_type=$3
+	count_rate=$4
+	if [ "$top_times""X" = "X" ];then
+		top_times=300
+		echo "Warning:didn't input top continous times,use default [300]!"
+	fi
+	
+	ip_list=""
+	top_cmd=""
+	if [ "$cpu_type" = "DB" ];then
+		#ssh top cann't show all CMD,so we cann't grep with DNP|PRP|VCLI
+		get_pid_list_4cpu "DB"
+		ip_list="$db_ip_list"
+		top_cmd="top -d 2 -c -bn $top_times | grep -E \"Cpu|$global_pid_list\""
+	elif [ "$cpu_type" = "PLU" ];then
+		get_pid_list_4cpu "PLU"
+		ip_list="$ugw_ip_list"
+		top_cmd="top -d 2 -c -bn $top_times | grep -E \"Cpu|$global_pid_list\""
+	else
+		echo "ERROR:don't support [$cpu_type]"
+		return
+	fi
+	
+	for ip in $ip_list
+	do
+		expect -f ssh_cmd.exp "$ip" "$top_cmd > $ip.$test_type.$count_rate.cpu" "$default_vm_user" "$default_vm_passwd" "3"
+	done
+}
+
+calculate_cpu()
+{
+	cpu_file=$1
+	if [ ! -f $cpu_file ];then
+		echo "ERROR:file[$cpu_file] don't exist!"
+		return
+	fi
+	
+	vm_type=$2
+	rate=$3
+	if [ "$vm_type" = "DB" ];then
+		#we attention DB sum=us+sy of system'
+		us_sy_rate=$rate
+		if [ "$us_sy_rate""X" = "X" ];then
+			us_sy_rate=25
+		fi
+		proc_rate=100
+	elif [ "$vm_type" = "PLU" ];then
+		#we attention PLU process info'
+		proc_rate=$rate
+		if [ "$proc_rate""X" = "X" ];then
+			proc_rate=20
+		fi
+		us_sy_rate=10
+	else
+		echo "ERROR:don't support [$vm_type]!"
+		return
+	fi
+	
+	echo "+++++++++++++++++++++++++++[$cpu_file]+++++++++++++++++++++++++++"
+	echo "++++++++++++start Cpu[us+sy>$us_sy_rate]++++++++++++"
+	us_sy_sum_list=`cat $cpu_file |grep Cpu | awk '{print $2+$4}' | awk "\\$1 > $us_sy_rate"`
+	echo $us_sy_sum_list
+	us_sy_all_sum=`echo $us_sy_sum_list | awk '{for(i=1;i<=NF;i++) sum+=$i;print sum}'`
+	us_sy_sum_count=`echo $us_sy_sum_list | awk '{for(i=1;i<=NF;i++) print $i}' | wc -l`
+	us_sy_sum_avg=`echo $us_sy_all_sum/\($us_sy_sum_count\) | bc`
+	us_sy_sum_max=`echo $us_sy_sum_list | awk '{max=0}{for(i=1;i<=NF;i++) if ($i>max) max=$i fi}{print max}'`
+	echo -e "\033[33m+++[count:$us_sy_sum_count][sum:$us_sy_all_sum][avg:$us_sy_sum_avg][max:$us_sy_sum_max]+++\033[0m"
+	echo "++++++start process info[cpu>$proc_rate]++++++"
+	proc_cpu_list=`cat $cpu_file | grep root | awk '{print $9}' | awk "\\$1 > $proc_rate"`
+	echo $proc_cpu_list
+	proc_cpu_sum=`echo $proc_cpu_list | awk '{for(i=1;i<=NF;i++) sum+=$i;print sum}'`
+	proc_cpu_count=`echo $proc_cpu_list | awk '{for(i=1;i<=NF;i++) print $i}' | wc -l`
+	proc_cpu_avg=`echo $proc_cpu_sum/\($proc_cpu_count\) | bc`
+	proc_cpu_max=`echo $proc_cpu_list | awk '{max=0}{for(i=1;i<=NF;i++) if ($i>max) max=$i fi}{print max}'`
+	echo -e "\033[33m+++[count:$proc_cpu_count][sum:$proc_cpu_sum][avg:$proc_cpu_avg][max:$proc_cpu_max]++++\033[0m"
+	echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+}
+
+get_cpu_log()
+{
+	test_type=$1
+	test_rate=$2
+	db_sys_cpu_rate=$3
+	plu_proc_cpu_rate=$4
+	cpu_file_name=""
+	#DB
+	for ip in $db_ip_list
+	do
+		cpu_file_name="$ip.$test_type.$test_rate.cpu"
+		expect -f scp_file.exp "get" "$ip" "$default_vm_user" "$default_vm_passwd" "$cpu_file_name" "./"
+		
+		calculate_cpu "$cpu_file_name" "DB" "$db_sys_cpu_rate"
+	done
+	
+	#PLU
+	for ip in $ugw_ip_list
+	do
+		cpu_file_name="$ip.$test_type.$test_rate.cpu"
+		expect -f scp_file.exp "get" "$ip" "$default_vm_user" "$default_vm_passwd" "$cpu_file_name" "./"
+		
+		calculate_cpu "$cpu_file_name" "PLU" "$plu_proc_cpu_rate"
+	done
+}
+
+start_add_subscribe()
+{
+	ip_list=$1
+	pid_list=""
+	declare -i index=1
+	if [ "$ip_list""X" = "X" ];then
+		ip_list="$ugw_ip_list"
+	else
+		pid_list=$2
+		index=$3
+		if [ "$pid_list""X" = "X" -o "$index""X" = "X" ];then
+			echo "ERROR:need more parameters!"
+			return
+		fi
+	fi
+	
+	
+	for plu_ip in $ip_list
+	do
+		if [ "$pid_list""X" = "X" ];then
+			pid_list=`ssh $plu_ip "ps axf | grep VCLI | grep -v 'grep' | awk '{print \\$1}'"`
+		fi
+		
+		for pid in $pid_list
+		do
+			case "$index" in
+				"1")
+				expect -f ssh_cmd.exp "$plu_ip" "cd $bin_dir;gdb -ex 'call CsdbPerfTestRegDataFeatureVSU1SG1()' -ex detach -ex q att $pid"  "$default_vm_user" "$default_vm_passwd" "20"
+				;;
+				"2")
+				expect -f ssh_cmd.exp "$plu_ip" "cd $bin_dir;gdb -ex 'call CsdbPerfTestRegDataFeatureVSU1SG2()' -ex detach -ex q att $pid"  "$default_vm_user" "$default_vm_passwd" "20"
+				;;
+				"3")
+				expect -f ssh_cmd.exp "$plu_ip" "cd $bin_dir;gdb -ex 'call CsdbPerfTestRegDataFeatureVSU2SG1()' -ex detach -ex q att $pid"  "$default_vm_user" "$default_vm_passwd" "20"
+				;;
+				"4")
+				expect -f ssh_cmd.exp "$plu_ip" "cd $bin_dir;gdb -ex 'call CsdbPerfTestRegDataFeatureVSU2SG2()' -ex detach -ex q att $pid"  "$default_vm_user" "$default_vm_passwd" "20"
+				;;
+			esac
+			let index++
+		done
+		pid_list=""
+	done
+}
+
+start_complex_perf()
+{
+	count_rate=$1
+	
+	#start moniter CPU
+	get_cpu_usage "DB" "300" "complex" "$count_rate"
+	get_cpu_usage "PLU" "300" "complex" "$count_rate"
+	
+	#start test
+	for plu_ip in $ugw_ip_list
+	do
+		pid_list=`ssh $plu_ip "ps axf | grep VCLI | grep -v 'grep' | awk '{print \\$1}'"`
+		for pid in $pid_list
+		do
+			echo "INFO:[count_rate=$count_rate][pid=$pid][ip=$plu_ip]"
+			expect -f ssh_cmd.exp "$plu_ip" "cd $bin_dir;gdb -ex 'call CsdbPerfTestStartComplexTest($count_rate)' -ex detach -ex q att $pid"  "$default_vm_user" "$default_vm_passwd" "20"
+			#gdb -ex 'call CsdbPerfTestStartLogTimer()' -ex detach -ex q att $pid
+		done
+	done
+	
+	#wait and get cpu log
+	echo "------------------------------------------------------------------------"
+	date
+	echo "INFO:wait 600s,then get cpu log..."
+	sleep 600
+	get_cpu_log "complex" "$count_rate" "$2" "$3"
+}
+
+start_insert_perf()
+{
+	count_rate=$1
+	
+	#start moniter CPU
+	get_cpu_usage "DB" "30" "insert" "$count_rate"
+	get_cpu_usage "PLU" "30" "insert" "$count_rate"
+	
+	#start test
+	for plu_ip in $ugw_ip_list
+	do
+		pid_list=`ssh $plu_ip "ps axf | grep VCLI | grep -v 'grep' | awk '{print \\$1}'"`
+		for pid in $pid_list
+		do
+			expect -f ssh_cmd.exp "$plu_ip" "cd $bin_dir;gdb -ex 'call CsdbPerfTestStartSubmitRecord($count_rate)' -ex detach -ex q att $pid;"  "$default_vm_user" "$default_vm_passwd" "20"
+		done
+	done
+	
+	#wait and get cpu log
+	echo "------------------------------------------------------------------------"
+	date
+	echo "INFO:wait 60s,then get cpu log..."
+	sleep 60
+	get_cpu_log "insert" "$count_rate" "$2" "$3"
+}
+
+start_delete_perf()
+{	
+	count_rate=$1
+	
+	#start moniter CPU
+	get_cpu_usage "DB" "30" "delete" "$count_rate"
+	get_cpu_usage "PLU" "30" "delete" "$count_rate"
+	
+	#start test
+	for plu_ip in $ugw_ip_list
+	do
+		pid_list=`ssh $plu_ip "ps axf | grep VCLI | grep -v 'grep' | awk '{print \\$1}'"`
+		for pid in $pid_list
+		do
+			expect -f ssh_cmd.exp "$plu_ip" "cd $bin_dir;gdb -ex 'call CsdbPerfTestStartEraseRecord($count_rate)' -ex detach -ex q att $pid"  "$default_vm_user" "$default_vm_passwd" "20"
+		done
+	done
+	
+	#wait and get cpu log
+	echo "------------------------------------------------------------------------"
+	date
+	echo "INFO:wait 60s,then get cpu log..."
+	sleep 60
+	get_cpu_log "delete" "$count_rate" "$2" "$3"
+}
+
+clear_complex_test_data()
+{
+	for plu_ip in $ugw_ip_list
+	do
+		pid_list=`ssh $plu_ip "ps axf | grep VCLI | grep -v 'grep' | awk '{print \\$1}'"`
+		for pid in $pid_list
+		do
+			echo "INFO:[pid=$pid][ip=$plu_ip]"
+			#clear data
+			expect -f ssh_cmd.exp "$plu_ip" "cd $bin_dir;gdb -ex 'call CsdbPerfTestClearComplexTest()' -ex detach -ex q att $pid"  "$default_vm_user" "$default_vm_passwd" "20"
+		done
+	done
+}
+
+stop_complex_perf()
+{
+	for plu_ip in $ugw_ip_list
+	do
+		pid_list=`ssh $plu_ip "ps axf | grep VCLI | grep -v 'grep' | awk '{print \\$1}'"`
+		for pid in $pid_list
+		do
+			#stop test
+			expect -f ssh_cmd.exp "$plu_ip" "cd $bin_dir;gdb -ex 'call CsdbPerfTestStopComplexTest()' -ex detach -ex q att $pid"  "$default_vm_user" "$default_vm_passwd" "20"
+		done
+	done
+}
+
+check_param()
+{
+	if [ "$1""X" = "X" ];then
+		echo "Error:need more parameter!"
+		print_help
+		exit
+	fi
+}
+
+default_log_path="/root"
+default_table_name="T0"
+default_vm_user="root"
+default_vm_passwd="huawei@123"
+
+omu_ip="48.10.46.100"
+omu_work_dir="/root/perf"
+omu2_ip="172.16.0.5"
+ssh_path="/root/.ssh"
+work_dir="$PWD"
+ugw_ip_list="172.16.0.11 172.16.0.13"
+db_ip_list="172.16.0.16 172.16.0.18"
+default_master_ip="172.16.0.18"
+
+global_pid_list=""
+
+so_dir="/opt/xx/1/xx/xx/pkg_pool/program/current/lib"
+lib_dir="/opt/xx/1/xx/xx/lib"
+bin_dir="/opt/xx/1/xx/xx/bin"
+server_ip_file="server_ip.txt"
+
+gmadm_home="/root/xx_install"
+gmadm_env_script="env_install.sh"
+gmadm_tool_path="tools/gmadm"
+gmadm_tool_tar="xx.tar.gz"
+
+xx_nos_log="/opt/xx/3/xx/var/log/{Loc*,SSP*}"
+xx_nos_log_omu="/opt/xx/3/xx/logfile/diag*"
+xx_log="/opt/xx/3/xx/xx/bin/debug/*"
+xx_log_other="/opt/xx/3/xx/xx/bin/xx*"
+xx_logcabin_log="/dev/shm/logcabin"
+xx_locfail_path="/opt/xx/3/xx/var/log"
+ugw_locfail_path="/opt/xx/1/xx/var/log/"
+ugw_nos_log="/opt/xx/1/xx/var/log/{Loc*,SSP*}"
+ugw_nos_log_omu="/opt/xx/1/xx/logfile/diaglog*"
+ugw_log_data="/opt/xx/1/xx/xx/bin/{My*,xx*}"
+
+print_help()
+{
+	echo "Usage:$script_name [option] [parameter1] [...]"
+	echo "Option and parameters:"
+	echo "	deploy,  send perf dir to OMU"
+	echo "	gmadm,  deploy gmadm tool of xx"
+	echo "	so_omu,  replace plugin so on OMU"
+	echo "	so_plu [ip],  replace plugin so on SPU_C,default is ugw_ip_list"
+	echo "	ssh,  create ssh authorized file and send to SPU_C/SDU_A"
+	echo "	sn [master ip],  get S&N info from xx,default master ip is [$default_master_ip]"
+	echo "	rec [table name] [master ip],  get table records from xx,default table name is [$default_table_name],default master ip is [$default_master_ip]"
+	echo "	p_db,  get process info from SDU_A"
+	echo "	p_plu,  get process info from SPU_C"
+	echo "	log [DB|PLU],  get log files from SDU_A[DB] or SPU_C[PLU],store log files to [$default_log_path]"
+	echo "	core_plu,  get core info(file like LocFail) from SDU_A"
+	echo "	core_db,  get core info(file like LocFail) from SPU_C"
+	echo "	perf_addsub [ip] [pid] [index],  if don't input parameter,will add subscribe to every plugin process"
+	echo "	perf_complex [date rate] [db_sys cpu rate] [plu_proc cpu rate],  start cpmplex performance test"
+	echo "	perf_insert [date rate] [db_sys cpu rate] [plu_proc cpu rate],  start insert performance test"
+	echo "	perf_delete [date rate] [db_sys cpu rate] [plu_proc cpu rate],  start delete performance test"
+	echo "	clear_data,  clear complex test data"
+	echo "	stop_perf,  stop complex test"
+	echo "	cal_cpu [cpu info file] [vm type] [cpu srate],  calculate CPU info"
+	echo "	help,  print help information"
+}
+
+script_name="$0"
+arguments=$1
+if [ "$arguments" = "h" -o "$arguments""X" = "X" ];then
+	print_help
+	exit
+fi
+
+case "$arguments" in 
+	"deploy")
+	#execute on local
+	deploy_all
+	;;
+	"gmadm")
+	###all below execute on OMU###
+	deploy_gmadm_tool
+	;;
+	"so_omu")
+	replace_omu_so
+	;;
+	"so_plu")
+	input_ip=$2
+	replace_plu_so $input_ip
+	;;
+	"ssh")
+	gen_sshkey
+	send_sshkey_to_host
+	;;
+	"sn")
+	input_master_ip=$2
+	get_sn $input_master_ip
+	;;
+	"rec")
+	table_name=$2
+	input_master_ip=$3
+	get_table_records $table_name $input_master_ip
+	;;
+	"p_db")
+	get_process_info "DB"
+	;;
+	"p_plu")
+	get_process_info "PLU"
+	;;
+	"log")
+	log_type=$2
+	check_param $log_type
+	get_log $log_type "$default_log_path"
+	;;
+	"core_plu")
+	check_locfail_core "PLU"
+	;;
+	"core_db")
+	check_locfail_core "DB"
+	;;
+	"perf_addsub")
+	ip_list=$2
+	pid=$3
+	index=$4
+	
+	start_add_subscribe $ip_list $pid $index
+	;;
+	"perf_complex")
+	input_count_rate=$2
+	check_param $input_count_rate
+	input_db_sys_cpu_rate=$3
+	input_plu_proc_cpu_rate=$4
+	start_complex_perf $input_count_rate $input_cpu_rate $input_db_sys_cpu_rate $input_plu_proc_cpu_rate
+	;;
+	"perf_insert")
+	input_count_rate=$2
+	check_param $input_count_rate
+	input_db_sys_cpu_rate=$3
+	input_plu_proc_cpu_rate=$4
+	start_insert_perf $input_count_rate $input_db_sys_cpu_rate $input_plu_proc_cpu_rate
+	;;
+	"perf_delete")
+	input_count_rate=$2
+	check_param $input_count_rate
+	input_db_sys_cpu_rate=$3
+	input_plu_proc_cpu_rate=$4
+	start_delete_perf $input_count_rate $input_db_sys_cpu_rate $input_plu_proc_cpu_rate
+	;;
+	"clear_data")
+	clear_complex_test_data
+	;;
+	"stop_perf")
+	stop_complex_perf
+	;;
+	"cal_cpu")
+	input_file=$2
+	input_vm_type=$3
+	input_rate=$4
+	calculate_cpu $input_file $input_vm_type $input_rate
+	;;
+	"help")
+	print_help
+	;;
+	*)
+	echo "ERROR:doesn't support arguments [$arguments]!"
+	print_help
+	;;
+esac
