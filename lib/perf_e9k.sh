@@ -2,7 +2,7 @@
 #+++++++++++++++++++++++++++++++
 #Created on: 2016-3-16
 #Author: mlin
-#Comments: This script run on Test VM,change for E9000
+#Comments: This script run on Test VM
 #+++++++++++++++++++++++++++++++
 
 server_ip_list="48.10.46.71 48.10.46.72"
@@ -12,11 +12,11 @@ server_passwd="xxxx"
 main_server_ip="48.10.46.71"
 main_server_port="10051"
 
-#ce_sim2
-tool_name="ce_sim2"
+#x
+tool_name="x"
 tool_home="/root/perf/dmdb"
 
-#ce_sim2 run parameters
+#x run parameters
 default_test_type="I U R D"
 test_users=3000000
 test_features=48
