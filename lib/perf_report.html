@@ -1,0 +1,136 @@
+
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Performance Report</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<style type="text/css">
+			.trlevel1 {
+				font-size: 12pt; color: #276692; font-family: consolas; font-weight: bold; background-color: #a8dbdb;
+			}
+			.trlevel2 {
+				font-size: 12pt; color: #276692; font-family: consolas; background-color: #dce5ec;
+			}
+			.tdtitle{
+				font-size: 12pt; color: #276692; font-family: consolas; font-weight: bold; text-align: center; word-break: break-all;
+			}
+			.tdtitle_left{
+				font-size: 10pt; color: #276692; font-family: consolas; text-align: left; word-break: break-all;
+			}
+			.tdresult_highlight{
+				font-size: 10pt; color: black; font-family: consolas; font-weight: bold; text-align: center; word-break: break-all; background-color: #dce5ec;
+			}
+			.tdresult{
+				font-size: 10pt; font-family: consolas; font-weight: bold; text-align: center; word-break: break-all;
+			}
+			.tdresult_left{
+				font-size: 10pt; font-family: consolas; font-weight: bold; text-align: left; word-break: break-all;
+			}
+			.tdresult_bigred{
+				font-size: 10pt; font-family: consolas; font-weight: bold; text-align: center; word-break: break-all; background-color: #ff0000;
+			}
+			.tdresult_smallred{
+				font-size: 10pt; font-family: consolas; font-weight: bold; text-align: center; word-break: break-all; background-color: #ffacac;
+			}
+			.tdresult_biggreen{
+				font-size: 10pt; font-family: consolas; font-weight: bold; text-align: center; word-break: break-all; background-color: #30e450;
+			}
+			.tdresult_smallgreen{
+				font-size: 10pt; font-family: consolas; font-weight: bold; text-align: center; word-break: break-all; background-color: #b6f5c1;
+			}
+		</style>
+</head>
+<body topmargin="0" leftmargin="0" marginheight="0" marginwidth="0">
+<br>
+<a href="index.html">返回列表</a>
+<h2 align="center" style="font-size: 16pt; color: #276692; font-family:consolas">Performance Report</h2>
+<hr>
+<div>
+<table align="center" cellpadding="0" cellspacing="0" border="2" style="border-collapse: collapse;" width="90%">
+<tr class="trlevel1">
+<td colspan="2" align="center">statistical information for the last ten</td>
+</tr>
+<tr>
+<td><img src="http://10.67.200.138/ugw0_Update_OPS.PNG" alt="ugw-ops"></td><td><img src="http://10.67.200.138/ugw0_Update_CPU.PNG" alt="ugw-cpu"></td>
+</tr>
+<tr>
+<td><img src="http://10.67.200.138/usn0_Update_OPS.PNG" alt="usn-ops"></td><td><img src="http://10.67.200.138/usn0_Update_CPU.PNG" alt="usn-cpu"></td>
+</tr>
+<tr>
+<td><img src="http://10.67.200.138/simpleX_Update_OPS.PNG" alt="simpleX-ops"></td><td><img src="http://10.67.200.138/simpleX_Update_CPU.PNG" alt="simpleX-cpu"></td>
+</tr>
+</table>
+</div>
+<br>
+<div>
+<table align="center" cellpadding="0" cellspacing="0" border="2" style="border-collapse: collapse;" width="90%">
+<tr class="trlevel1">
+<td class="tdtitle">-</td><td class="tdtitle">Build ID</td><td class="tdtitle">PKG</td><td class="tdtitle">MD5</td><td class="tdtitle">Git Number</td>
+</tr>
+<tr>
+<td class="tdresult">本次测试版本</td><td class="tdresult">20160422101304</td><td class="tdresult">GMDBV300R001C01B520_Perf_Branch_ALL_16Client.tar.gz</td><td class="tdresult">40d6d6df7c01b66ef7a04b6f07e0bba0</td><td class="tdresult">49befe8131b0c158cb834477d11328cf91b5c3fe</td>
+</tr>
+<tr>
+<td class="tdresult">基线测试版本</td><td class="tdresult">20160330143758</td><td class="tdresult">GMDBV300R001C01B251-2016_03_12_20_58_43_release.tar.gz</td><td class="tdresult">3b155137101de96a89a927d0cc6534c1</td><td class="tdresult">a132abb65ce33ee53b73607ba2c4ada19c5ee6c2</td>
+</tr>
+<tr>
+<td class="tdresult">上次测试版本</td><td class="tdresult">20160422093658</td><td class="tdresult">GMDBV300R001C01B520_Perf_Branch_ALL_16Client.tar.gz</td><td class="tdresult">40d6d6df7c01b66ef7a04b6f07e0bba0</td><td class="tdresult">49befe8131b0c158cb834477d11328cf91b5c3fe</td>
+</tr>
+</table>
+</div>
+<br>
+<div>
+<table align="center" cellpadding="0" cellspacing="0" border="2" style="border-collapse: collapse;" width="90%">
+<tr class="trlevel1">
+<td class="tdtitle">操作</td><td class="tdtitle" colspan="5">Insert</td><td class="tdtitle" colspan="5">Update(Target:20000 ops/CORE)</td><td class="tdtitle" colspan="5">Read</td><td class="tdtitle" colspan="5">Delete</td><td class="tdtitle" colspan="5">Append</td>
+</tr>
+<tr class="trlevel2">
+<td class="tdtitle_left">模型\指标</td><td class="tdresult_highlight">吞吐量(ops/CORE)</td><td class="tdtitle_left">对比基线(%)</td><td class="tdtitle_left">对比上次(%)</td><td class="tdtitle_left">时延(min,median,avg/us)</td><td class="tdtitle_left">占用CPU</td><td class="tdresult_highlight">吞吐量(ops/CORE)</td><td class="tdtitle_left">对比基线(%)</td><td class="tdtitle_left">对比上次(%)</td><td class="tdtitle_left">时延(min,median,avg/us)</td><td class="tdtitle_left">占用CPU</td><td class="tdresult_highlight">吞吐量(ops/CORE)</td><td class="tdtitle_left">对比基线(%)</td><td class="tdtitle_left">对比上次(%)</td><td class="tdtitle_left">时延(min,median,avg/us)</td><td class="tdtitle_left">占用CPU</td><td class="tdresult_highlight">吞吐量(ops/CORE)</td><td class="tdtitle_left">对比基线(%)</td><td class="tdtitle_left">对比上次(%)</td><td class="tdtitle_left">时延(min,median,avg/us)</td><td class="tdtitle_left">占用CPU</td><td class="tdresult_highlight">吞吐量(ops/CORE)</td><td class="tdtitle_left">对比基线(%)</td><td class="tdtitle_left">对比上次(%)</td><td class="tdtitle_left">时延(min,median,avg/us)</td><td class="tdtitle_left">占用CPU</td>
+</tr>
+<tr>
+<td class="tdresult">ugw0</td><td class="tdresult_highlight">2961.0</td><td class="tdresult">0.0</td><td class="tdresult">0.18</td><td class="tdresult">905.0,14775.6,14775.6</td><td class="tdresult">57.0</td><td class="tdresult_highlight">24979.0</td><td class="tdresult">0.0</td><td class="tdresult">1.76</td><td class="tdresult">254.0,1569.0,1665.08</td><td class="tdresult">67.0</td><td class="tdresult_highlight">55556.0</td><td class="tdresult">0.0</td><td class="tdresult">1.98</td><td class="tdresult">99.0,542.0,716.927</td><td class="tdresult">27.0</td><td class="tdresult_highlight">3106.0</td><td class="tdresult">0.0</td><td class="tdresult_smallgreen">2.97</td><td class="tdresult">466.0,14086.5,14086.5</td><td class="tdresult">50.0</td><td class="tdresult_highlight">24347.0</td><td class="tdresult">0.0</td><td class="tdresult">1.88</td><td class="tdresult">254.0,1542.0,1754.11</td><td class="tdresult">64.0</td>
+</tr>
+<tr>
+<td class="tdresult">usn0</td><td class="tdresult_highlight">6179.0</td><td class="tdresult_smallred">-2.94</td><td class="tdresult">1.42</td><td class="tdresult">708.0,7010.06,7010.06</td><td class="tdresult">71.0</td><td class="tdresult_highlight">24242.0</td><td class="tdresult_biggreen">22.47</td><td class="tdresult">1.16</td><td class="tdresult">266.0,1591.0,1766.71</td><td class="tdresult">80.0</td><td class="tdresult_highlight">31186.0</td><td class="tdresult_smallgreen">2.57</td><td class="tdresult_biggreen">5.37</td><td class="tdresult">147.0,1014.0,1267.71</td><td class="tdresult">6.0</td><td class="tdresult_highlight">3732.0</td><td class="tdresult">0.0</td><td class="tdresult_bigred">-5.75</td><td class="tdresult">448.0,11654.4,11654.4</td><td class="tdresult">50.0</td><td class="tdresult_highlight">14444.0</td><td class="tdresult">0.39</td><td class="tdresult">0.69</td><td class="tdresult">313.0,2543.0,2979.68</td><td class="tdresult">70.0</td>
+</tr>
+<tr>
+<td class="tdresult">simple2048</td><td class="tdresult_highlight">15494.0</td><td class="tdresult">-0.87</td><td class="tdresult">0.15</td><td class="tdresult">348.0,2411.0,2762.39</td><td class="tdresult">45.0</td><td class="tdresult_highlight">27453.0</td><td class="tdresult_biggreen">16.92</td><td class="tdresult_smallgreen">4.43</td><td class="tdresult">215.0,1411.0,1532.71</td><td class="tdresult">61.0</td><td class="tdresult_highlight">42618.0</td><td class="tdresult_biggreen">9.2</td><td class="tdresult_bigred">-5.38</td><td class="tdresult">92.0,705.0,964.305</td><td class="tdresult">32.0</td><td class="tdresult_highlight">27242.0</td><td class="tdresult_biggreen">26.99</td><td class="tdresult_biggreen">6.46</td><td class="tdresult">214.0,1396.0,1551.29</td><td class="tdresult">45.0</td><td class="tdresult_highlight">0</td><td class="tdresult">0</td><td class="tdresult">0</td><td class="tdresult">0</td><td class="tdresult">0</td>
+</tr>
+<tr>
+<td class="tdresult">simple400</td><td class="tdresult_highlight">23759.0</td><td class="tdresult_biggreen">15.95</td><td class="tdresult_smallgreen">4.62</td><td class="tdresult">259.0,1581.0,1775.74</td><td class="tdresult">45.0</td><td class="tdresult_highlight">27000.0</td><td class="tdresult_biggreen">18.58</td><td class="tdresult">-0.48</td><td class="tdresult">212.0,1452.0,1561.09</td><td class="tdresult">59.0</td><td class="tdresult_highlight">57236.0</td><td class="tdresult_biggreen">21.01</td><td class="tdresult_smallgreen">2.13</td><td class="tdresult">97.0,540.0,703.663</td><td class="tdresult">31.0</td><td class="tdresult_highlight">24204.0</td><td class="tdresult">-0.24</td><td class="tdresult_bigred">-7.31</td><td class="tdresult">179.0,1452.0,1753.88</td><td class="tdresult">45.0</td><td class="tdresult_highlight">0</td><td class="tdresult">0</td><td class="tdresult">0</td><td class="tdresult">0</td><td class="tdresult">0</td>
+</tr>
+<tr>
+<td class="tdresult">simplekey2048</td><td class="tdresult_highlight">5483.0</td><td class="tdresult_bigred">-7.78</td><td class="tdresult">0.48</td><td class="tdresult">685.0,7953.5,7953.5</td><td class="tdresult">69.0</td><td class="tdresult_highlight">27508.0</td><td class="tdresult_biggreen">35.18</td><td class="tdresult_smallgreen">2.24</td><td class="tdresult">224.0,1396.0,1528.0</td><td class="tdresult">63.0</td><td class="tdresult_highlight">43137.0</td><td class="tdresult_biggreen">12.03</td><td class="tdresult">-1.13</td><td class="tdresult">146.0,701.0,948.658</td><td class="tdresult">31.0</td><td class="tdresult_highlight">7073.0</td><td class="tdresult_biggreen">10.56</td><td class="tdresult_smallgreen">2.66</td><td class="tdresult">265.0,6157.6,6157.6</td><td class="tdresult">54.0</td><td class="tdresult_highlight">0</td><td class="tdresult">0</td><td class="tdresult">0</td><td class="tdresult">0</td><td class="tdresult">0</td>
+</tr>
+<tr>
+<td class="tdresult">simplekey400</td><td class="tdresult_highlight">6299.0</td><td class="tdresult_bigred">-10.07</td><td class="tdresult">0.37</td><td class="tdresult">671.0,6915.76,6915.76</td><td class="tdresult">71.0</td><td class="tdresult_highlight">25983.0</td><td class="tdresult_biggreen">16.98</td><td class="tdresult_smallgreen">2.45</td><td class="tdresult">194.0,1447.0,1623.53</td><td class="tdresult">55.0</td><td class="tdresult_highlight">57135.0</td><td class="tdresult_biggreen">21.3</td><td class="tdresult">-1.53</td><td class="tdresult">98.0,535.0,705.214</td><td class="tdresult">27.0</td><td class="tdresult_highlight">7162.0</td><td class="tdresult_biggreen">12.92</td><td class="tdresult_smallgreen">3.66</td><td class="tdresult">288.0,6080.58,6080.58</td><td class="tdresult">54.0</td><td class="tdresult_highlight">0</td><td class="tdresult">0</td><td class="tdresult">0</td><td class="tdresult">0</td><td class="tdresult">0</td>
+</tr>
+</table>
+</div>
+<br>
+<br>
+<br>
+<div>
+<table align="center" cellpadding="0" cellspacing="0" border="2" style="border-collapse: collapse;" bordercolor="#dce5ec" width="90%">
+<tr>
+<td class="tdtitle">组网图</td><td class="tdresult_left"><img src="http://10.67.200.138/hardware.PNG" alt="组网"><img src="http://10.67.200.138/network.PNG" alt="组网"></td>
+</tr>
+<tr>
+<td class="tdtitle">组网说明</td><td class="tdresult_left">性能测试环境由3台2288搭建的分层云环境，10GE网络，创建3个VM（分布在3个物理机上），2个用于部署GMDB，配置2C4T/24GB，与产品一致；1个部署ce_sim性能测试工具</td>
+</tr>
+<tr>
+<td class="tdtitle">simple</td><td class="tdresult_left">简单数据模型，2层2个表，无辅key，simple[400/2048/4096]表示单object大小，单位bytes</td>
+</tr>
+<tr>
+<td class="tdtitle">simplekey</td><td class="tdresult_left">简单数据模型，2层2个表，根表3个辅key，simple[400/2048/4096]表示单object大小，单位bytes</td>
+</tr>
+<tr>
+<td class="tdtitle">usn</td><td class="tdresult_left">产品数据模型</td>
+</tr>
+<tr>
+<td class="tdtitle">ugw</td><td class="tdresult_left">产品数据模型</td>
+</tr>
+</table>
+</div>
+</body>
+</html>
