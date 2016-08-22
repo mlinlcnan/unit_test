@@ -1,0 +1,89 @@
+【创建虚拟机】
+1、创建模板，配置CPU数量、内存、磁盘大小
+nova flavor-create --ephemeral 50 --swap 30 --is-public true xxx_flavor auto 24576 50 4
+——最后3个参数分别表示：内存大小 磁盘大小 vCPU个数
+ 
+2、创建镜像
+glance image-create --name GMDB_img --disk-format qcow2 --container-format bare --is-public True < /opt/HUAWEI/image/xxx.img
+qcow2：表示镜像文件格式，可以使用qemu-img info [xxx.img]查询
+http://docs.openstack.org/developer/glance/formats.html
+ 
+3、创建网络和端口
+（1）neutron net-create FABRIC_4000 --provider:network_type vlan --provider:physical_network physnet2 --provider:segmentation_id 4000 --shared
+FABRIC_4000：名称，自己取
+physnet2：FS上划分的物理网络（如下图），查询方法：cps provider-list
+4000：vlan号，按环境需求决定
+
+（2）创建端口
+neutron port-create a3de8242-de54-41d8-8072-5711fc9fcd27 --binding:vnic-type direct --name xxx_port1
+a3de8242-de54-41d8-8072-5711fc9fcd27：（1）中创建的网络的ID，查询方法：
+neutron net-list
+direct：硬直通（要使用SRIOV）模式，其他模式可以上hi3ms查询
+ 
+4、拉起虚拟机
+nova boot --flavor fd791d3e-bbd8-4ee2-8aa3-70e0eb93828d --image b05f8fb8-e162-46f2-8d81-010941abbad0 --nic port-id=dca54317-4cb7-4d75-a9d9-77421103dec7 --nic port-id=ff862dd1-3af7-4955-a60e-74f98c6ecc77 --availability-zone :A0E4561F-4DA5-E311-80F9-000000821800 GMDB_vm1
+（1）3个ID与上面创建的对应即可
+（2）--availability-zone：表示这个VM创建到那个物理机上
+（3）如果对虚拟机性能有要求，需要绑定CPU，NUMA隔离等，可以指定下面的参数：
+--hint hyperThreadAffinity=sync --hint numaOps=1 --hint vcpuAffinity=[1]
+
+——网络问题处理——
+在FS执行‘neutron security-group-list’，如果成功有结果返回不报错，则表示安全组为完全关闭），尝试了手工关闭安全组，创建虚拟机又报错‘404 Not Found
+The resource could not be found’，根据最初的错误是说在安全考虑需要创建子网云云，最终通过先创建1个子网，再创建端口的方式解决该问题：
+neutron subnet-create a3de8242-de54-41d8-8072-5711fc9fcd27 192.168.0.0/16
+a3de8242-de54-41d8-8072-5711fc9fcd27：网络的ID
+IP段：根据需求自行规划
+
+【NUMA调优】
+1、绑定核亲和性
+字段代表：vcpuAffinity、hyperThreadAffinity
+hyperThreadAffinity：字段表示是否开启超线程，可选[any, none, internal, sync]，默认字段为any
+vcpuAffinity：字段表示是否绑核，可选字段为0, 1，默认字段为0（当前必须是[0]或者[1]）
+sync：仅有的一个支持超线程的模式，选用该模式vcpuAffinity字段必须为1
+internal：不开启超线且不绑核的模式，选用该模式vcpuAffinity字段必须为0
+none：不开启超线且绑核的模式，选用该模式vcpuAffinity字段必须为1
+any：超配模式，选用该模式cpu线程可重用；
+
+2、NUMA亲和性
+字段代表：numaOpts，字段可选0,1
+值为1代表开启NUMA亲和性，一旦开启部署虚拟机则会只找一个NUMA节点；
+值为0则优先寻找 符合条件的NUMA节点，找不到则跨NUMA节点部署,默认值为0；
+
+3、HT（Hyper-threading，超线程）技术允许一个物理核同时运行两个线程，一个物理核表现得类似两个逻辑核，从而提升CPU运行效率。 HT技术在频繁通信的两个进程共用一个物理核的两个线程时可以带来性能提升，但是两个业务独立的进程共用一个物理核的两个线程时会导致cache频繁刷新从而性能下降。
+
+4、查询网卡所在NUMA节点
+66FD0714-D21D-B211-A30D-000000821800:~/perf # cat /sys/class/net/eth4/device/numa_node 
+1
+66FD0714-D21D-B211-A30D-000000821800:~/perf # cat /sys/class/net/eth5/device/numa_node 
+1
+66FD0714-D21D-B211-A30D-000000821800:~/perf # cat /sys/class/net/eth6/device/numa_node 
+1
+66FD0714-D21D-B211-A30D-000000821800:~/perf # cat /sys/class/net/eth7/device/numa_node 
+1
+66FD0714-D21D-B211-A30D-000000821800:~ # ethtool eth5
+
+5、网卡软中断
+cat /proc/interrupts，这个是在VM上查询
+10GE
+ 51:       3155  203712422          0          0   PCI-MSI-edge      eth1-TxRx-0
+ 52:         24          0          0          0   PCI-MSI-edge      eth1
+40GE
+ 51:          7          0  462248793          0   PCI-MSI-edge      mlx4-comp-0@pci:0000:00:03.0
+ 52:          1          0          0  120470426   PCI-MSI-edge      mlx4-comp-1@pci:0000:00:03.0
+ 53:  227560725          0          0          0   PCI-MSI-edge      mlx4-comp-2@pci:0000:00:03.0
+查询当前绑定情况
+localhost:~/perf # cat /proc/irq/51/smp_affinity
+2 —— 说明对应：0010
+localhost:~/perf # cat /proc/irq/52/smp_affinity
+4 —— 说明对应：0100
+localhost:~/perf # cat /proc/irq/53/smp_affinity
+8 —— 说明对应：1000
+修改
+echo 2 > cat /proc/irq/51/smp_affinity
+
+【virsh用法】
+numactl -H
+virsh dumpxml ID
+virsh vcpupin ID
+
+
