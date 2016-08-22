@@ -22,3 +22,6 @@ workdir/
 ###TODO list###
 1. test目录下的makefile需支持多测试文件编译
 2. 提供一个总得shell脚本，对src和test进行一键式编译和运行
+
+###GDB example###
+http://www.brendangregg.com/blog/2016-08-09/gdb-example-ncurses.html
