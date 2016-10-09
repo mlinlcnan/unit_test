@@ -1,0 +1,25 @@
+打包的Jar如果包含了lib文件，如果想将lib打包到jar中，直接运行时不行的，还是需要在jar同级目录下放置lib文件夹和库，one-jar这个工具解决了上述问题，使用方法：
+66FD0714-D21D-B211-A30D-000000821800:~/testjar # ll
+total 300
+drwxr-xr-x 2 root root   4096 Mar 22 19:25 META-INF
+-rw-r--r-- 1 root root   1046 Mar 22 19:25 OneJar.class
+drwxr-xr-x 3 root root   4096 Mar 22 19:25 bin
+-rw-r--r-- 1 root root    111 Mar 22 19:31 boot-manifest.mf
+drwxr-xr-x 3 root root   4096 Mar 22 19:25 com
+drwxr-xr-x 2 root root   4096 Mar 22 19:25 doc
+drwxr-xr-x 2 root root   4096 Mar 24 01:18 lib
+drwxr-xr-x 2 root root   4096 Mar 22 19:30 main  ——放置自己打包出来的jar（不要带lib）
+-rw-r--r-- 1 root root 268270 Mar 22 19:25 one-jar-$project$.jar
+66FD0714-D21D-B211-A30D-000000821800:~/testjar # ll main/
+total 32
+-rw-r--r-- 1 root root  7010 Mar 22 19:30 main.jar
+-rw-r--r-- 1 root root 22226 Mar 28 19:03 perf_report.jar
+66FD0714-D21D-B211-A30D-000000821800:~/testjar # ll lib/
+total 1132
+-rw-r--r-- 1 root root 313359 Mar 24 01:18 dom4j-1.6.jar
+-rw-r--r-- 1 root root 832960 Mar 22 19:25 mysql-conn.jar
+66FD0714-D21D-B211-A30D-000000821800:~/testjar # cat boot-manifest.mf 
+Manifest-Version: 1.0
+Main-Class: com.simontuffs.onejar.Boot
+One-Jar-Main-Class: com.huawei.gmdb.perf.GmdbPerf
+66FD0714-D21D-B211-A30D-000000821800:~/testjar # jar -cvfm ../perf/perf_report.jar boot-manifest.mf .
