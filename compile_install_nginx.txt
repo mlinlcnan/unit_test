@@ -1,0 +1,34 @@
+编译安装
+./configure --prefix=/usr/local/webserver/nginx --with-http_stub_status_module --with-http_ssl_module --without-http_rewrite_module --with-openssl=../openssl-1.0.1c/
+Make
+Make install
+启动：./nginx
+
+文件目录：
+/usr/local/webserver/nginx/html
+linux-gmea:~ # ll /home/nginx/nginx1.6/objs/
+total 7344
+-rw-r--r-- 1 root root   38453 Mar 26 10:02 Makefile
+-rw-r--r-- 1 root root   12636 Mar 26 10:02 autoconf.err
+-rwxr-xr-x 1 root root 7332606 Mar 26 10:05 nginx
+-rw-r--r-- 1 root root    5293 Mar 26 10:05 nginx.8
+-rw-r--r-- 1 root root    6112 Mar 26 10:02 ngx_auto_config.h
+-rw-r--r-- 1 root root     657 Mar 26 10:02 ngx_auto_headers.h
+-rw-r--r-- 1 root root    3804 Mar 26 10:02 ngx_modules.c
+-rw-r--r-- 1 root root   80992 Mar 26 10:05 ngx_modules.o
+drwxr-xr-x 8 root root    4096 Mar 26 09:58 src
+
+linux-gmea:/home/nginx/nginx1.6/objs # ./nginx -h
+nginx version: nginx/1.6.3
+Usage: nginx [-?hvVtq] [-s signal] [-c filename] [-p prefix] [-g directives]
+
+Options:
+  -?,-h         : this help
+  -v            : show version and exit
+  -V            : show version and configure options then exit
+  -t            : test configuration and exit
+  -q            : suppress non-error messages during configuration testing
+  -s signal     : send signal to a master process: stop, quit, reopen, reload
+  -p prefix     : set prefix path (default: /usr/local/webserver/nginx/)
+  -c filename   : set configuration file (default: conf/nginx.conf)
+  -g directives : set global directives out of configuration file
